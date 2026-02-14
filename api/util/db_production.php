@@ -1,20 +1,20 @@
 <?php
-// DB Connection for Aiven & Render (Production)
-// Kode ini otomatis membaca Environment Variables dari Render
-
 $host = getenv('DB_HOST');
 $port = getenv('DB_PORT');
 $dbname = getenv('DB_DATABASE');
 $username = getenv('DB_USERNAME');
 $password = getenv('DB_PASSWORD');
-$ssl_ca = getenv('MYSQL_ATTR_SSL_CA'); // Lokasi file ca.pem
+
+// Gunakan Document Root agar path ke ca.pem absolut dan benar di server Vercel
+$ssl_ca = $_SERVER['DOCUMENT_ROOT'] . '/certs/ca.pem';
 
 try {
-    // Menambahkan opsi SSL untuk koneksi ke Aiven
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::MYSQL_ATTR_SSL_CA => $ssl_ca, // Penting untuk Aiven!
+        // Tambahkan verifikasi server agar lebih stabil
+        PDO::MYSQL_ATTR_SSL_CA => $ssl_ca,
+        PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
     ];
 
     $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
@@ -22,12 +22,8 @@ try {
 
 }
 catch (PDOException $e) {
-    // Catatan: Jika error, Render akan mencatatnya di 'Logs'
     http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database connection failed.',
-        'error_detail' => (getenv('APP_DEBUG') === 'true') ? $e->getMessage() : 'Security protection active'
-    ]);
+    // Kita tampilkan error-nya sementara agar kita bisa tahu apa yang salah
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
     exit();
 }
