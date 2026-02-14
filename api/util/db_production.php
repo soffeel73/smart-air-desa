@@ -5,39 +5,37 @@ $dbname = trim(getenv('DB_DATABASE')) ?: 'defaultdb';
 $username = trim(getenv('DB_USERNAME'));
 $password = trim(getenv('DB_PASSWORD'));
 
-// Path SSL
+// Path sertifikat
 $ssl_ca = $_SERVER['DOCUMENT_ROOT'] . '/certs/ca.pem';
 
 try {
-    // PERUBAHAN DISINI: Kita tambahkan protokol TCP secara paksa
-    // Format: mysql:host=tcp://hostname;...
-    $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
+    // KUNCINYA: Gunakan IP dilingkari kurung atau definisikan host tanpa embel-embel
+    // Dan tambahkan parameter pdo_mysql.default_socket
+    $dsn = "mysql:host={$host};port={$port};dbname={$dbname}";
 
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::MYSQL_ATTR_SSL_CA => $ssl_ca,
         PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
-        // Tambahan opsi untuk memaksa koneksi jaringan
+        // PAKSA koneksi melalui jaringan, bukan socket
         PDO::ATTR_PERSISTENT => false,
-        PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
     ];
+
+    // Cek apakah file CA benar-benar ada sebelum konek
+    if (!file_exists($ssl_ca)) {
+        throw new Exception("Sertifikat SSL tidak ditemukan di: " . $ssl_ca);
+    }
 
     $pdo = new PDO($dsn, $username, $password, $options);
 
 }
-catch (PDOException $e) {
+catch (Exception $e) {
     header('Content-Type: application/json');
-    // Jika masih gagal, kita tampilkan semua info tanpa sensor untuk debug
     echo json_encode([
         'success' => false,
         'message' => $e->getMessage(),
-        'check' => [
-            'host' => $host,
-            'port' => $port,
-            'ssl_path' => $ssl_ca,
-            'ssl_file_exists' => file_exists($ssl_ca)
-        ]
+        'info' => 'Coba gunakan IP Address jika Hostname gagal'
     ]);
     exit();
 }
