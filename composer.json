@@ -1,0 +1,14 @@
+{
+    "name": "smart-air/aplikasi",
+    "description": "Smart Air Desa Application",
+    "type": "project",
+    "require": {
+        "phpoffice/phpspreadsheet": "^5.4"
+    },
+    "authors": [
+        {
+            "name": "PapAnoem",
+            "email": "email@example.com"
+        }
+    ]
+}
