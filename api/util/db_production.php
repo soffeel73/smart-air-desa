@@ -1,32 +1,17 @@
 <?php
-// Ambil variabel dari Vercel
+// Ambil variabel
 $host = getenv('DB_HOST');
-$port = getenv('DB_PORT');
-$dbname = getenv('DB_DATABASE');
+$port = getenv('DB_PORT') ?: '18910'; // Gunakan port dari hasil cek_env tadi
+$dbname = getenv('DB_DATABASE') ?: 'defaultdb';
 $username = getenv('DB_USERNAME');
 $password = getenv('DB_PASSWORD');
 
-// Jika variabel kosong, tampilkan pesan khusus agar kita tahu mana yang meleset
-if (!$host) {
-    die(json_encode(['success' => false, 'message' => 'Environment Variable DB_HOST tidak terbaca']));
-}
-
-// Coba beberapa alternatif path sertifikat untuk Vercel
-$paths = [
-    $_SERVER['DOCUMENT_ROOT'] . '/certs/ca.pem',
-    __DIR__ . '/../../certs/ca.pem',
-    '/var/task/user/certs/ca.pem'
-];
-
-$ssl_ca = null;
-foreach ($paths as $path) {
-    if (file_exists($path)) {
-        $ssl_ca = $path;
-        break;
-    }
-}
+// Path SSL
+$ssl_ca = $_SERVER['DOCUMENT_ROOT'] . '/certs/ca.pem';
 
 try {
+    // PAKSA ke TCP dengan menambahkan host=... (tanpa socket)
+    // Gunakan port langsung di dalam DSN
     $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
 
     $options = [
@@ -34,6 +19,8 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::MYSQL_ATTR_SSL_CA => $ssl_ca,
         PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => false,
+        // PAKSA PDO untuk tidak menggunakan local socket
+        PDO::ATTR_PERSISTENT => false
     ];
 
     $pdo = new PDO($dsn, $username, $password, $options);
@@ -44,10 +31,7 @@ catch (PDOException $e) {
     echo json_encode([
         'success' => false,
         'message' => 'Koneksi Gagal: ' . $e->getMessage(),
-        'debug' => [
-            'host_terbaca' => $host ? 'Ya' : 'Tidak',
-            'ssl_file_ditemukan' => $ssl_ca ? 'Ya' : 'Tidak'
-        ]
+        'info' => 'Pastikan IP Vercel tidak diblokir oleh Aiven (Aiven biasanya mengizinkan semua IP 0.0.0.0/0 secara default)'
     ]);
     exit();
 }
