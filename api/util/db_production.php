@@ -1,44 +1,30 @@
 <?php
-// Pastikan tidak ada spasi sebelum <?php
-
-$host = trim(getenv('DB_HOST'));
-$port = trim(getenv('DB_PORT')) ?: '3306';
-$dbname = trim(getenv('DB_DATABASE'));
-$username = trim(getenv('DB_USERNAME'));
-$password = trim(getenv('DB_PASSWORD'));
-
-// DIAGNOSA: Jika host kosong, tampilkan pesan khusus
-if (!$host) {
-    header('Content-Type: application/json');
-    die(json_encode([
-        'error' => true,
-        'message' => 'Variabel DB_HOST tidak terbaca oleh Vercel. Pastikan sudah input di Environment Variables dan sudah di-Redeploy.'
-    ]));
-}
+// JALUR DARURAT: Menghindari masalah Environment Variables Vercel
+$host = '153.92.15.84'; // IP Hostinger Anda
+$port = '3306';
+$dbname = 'u915147866_db_hippams'; // GANTI dengan nama database Hostinger Anda
+$username = 'u915147866_hippams'; // GANTI dengan username database Hostinger Anda
+$password = 'Hippams2026!'; // GANTI dengan password database Hostinger Anda
 
 try {
-    // Gunakan dsn tanpa embel-embel, tapi pastikan host adalah IP
-    $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
+    // Kita paksa menggunakan dsn tanpa variabel getenv
+    $dsn = "mysql:host=$host;port=$port;dbname=$dbname;charset=utf8mb4";
 
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_TIMEOUT => 5, // Timeout cepat jika gagal
+        PDO::ATTR_EMULATE_PREPARES => false,
     ];
 
     $pdo = new PDO($dsn, $username, $password, $options);
 
 }
-catch (Throwable $e) {
+catch (PDOException $e) {
     header('Content-Type: application/json');
     echo json_encode([
-        'error' => true,
-        'message' => $e->getMessage(),
-        'debug_info' => [
-            'host_used' => $host,
-            'port_used' => $port,
-            'db_name' => $dbname
-        ]
+        "success" => false,
+        "message" => "Gagal konek Hostinger: " . $e->getMessage(),
+        "info" => "Cek kembali username/password/remote MySQL (%)"
     ]);
     exit();
 }
