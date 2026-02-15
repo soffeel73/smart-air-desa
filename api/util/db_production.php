@@ -1,4 +1,7 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 $host = getenv('DB_HOST');
 $port = getenv('DB_PORT') ?: '18910';
 $dbname = getenv('DB_DATABASE') ?: 'defaultdb';
@@ -19,11 +22,13 @@ try {
     $pdo = new PDO($dsn, $username, $password, $options);
 
 }
-catch (Exception $e) {
+catch (Throwable $e) {
     header('Content-Type: application/json');
     echo json_encode([
-        'success' => false,
-        'message' => $e->getMessage()
+        'error' => true,
+        'message' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
     ]);
     exit();
 }
