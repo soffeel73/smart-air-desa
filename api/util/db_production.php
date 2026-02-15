@@ -9,7 +9,7 @@ $username = getenv('DB_USERNAME');
 $password = getenv('DB_PASSWORD');
 
 try {
-    $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
+    $dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4;protocol=tcp";
 
     $options = [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
